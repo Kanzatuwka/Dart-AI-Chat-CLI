@@ -131,9 +131,14 @@ void main(List<String> args) async {
       }
 
       print('\x1B[33mAttempting to spawn AI...\x1B[0m');
-      Process.start('dart', ['bin/ai_participant.dart', argToPass]).then((Process process) {
-        process.stdout.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_LOG: $data'));
-        process.stderr.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_ERR: $data'));
+      
+      // Inherit and extend environment
+      final env = Map<String, String>.from(Platform.environment);
+      env['CHAT_PORT'] = client._socket.remotePort.toString();
+      
+      Process.start('dart', ['bin/ai_participant.dart', argToPass], environment: env).then((Process process) {
+        process.stdout.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_STDOUT: $data'));
+        process.stderr.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_STDERR: $data'));
       }).catchError((e) => print('Failed to start AI: $e'));
       stdout.write('> ');
     } else if (line.isNotEmpty) {

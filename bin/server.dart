@@ -47,6 +47,7 @@ class ChatServer {
   }
 
   void broadcast(ChatMessage message) {
+    print('BROADCASTING: ${message.sender}: ${message.content.length > 50 ? message.content.substring(0, 50) + "..." : message.content}');
     final encoded = jsonEncode(message.toJson()) + '\n';
     for (var client in _clients) {
       client.write(encoded);

@@ -51,7 +51,7 @@ class AIEngine {
 
   Future<Personality> generateRandomPersonality() async {
     final client = HttpClient();
-    client.connectionTimeout = const Duration(seconds: 10);
+    client.connectionTimeout = const Duration(seconds: 15);
     
     try {
       final prompt = """
@@ -60,7 +60,7 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
 {
   "id": "unique-slug",
   "name": "Creative Name",
-  "backstory": "Detailed personality description",
+  "backstory": "Detailed personality description and speaking style",
   "farewell": "Thematic goodbye message"
 }
 """;
@@ -73,16 +73,17 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
         body = {
           "model": "local-model",
           "messages": [{"role": "user", "content": prompt}],
-          "temperature": 0.8,
+          "temperature": 0.9,
         };
       } else {
-        uri = Uri.parse('$_baseUrl/models/gemini-2.0-flash-exp:generateContent?key=$apiKey');
+        uri = Uri.parse('$_baseUrl/models/gemini-1.5-flash:generateContent?key=$apiKey');
         body = {
           "contents": [{"parts": [{"text": prompt}]}],
           "generationConfig": {"responseMimeType": "application/json"}
         };
       }
 
+      print('AI_ENGINE: Sending random personality request to $uri');
       final request = await client.postUrl(uri);
       request.headers.set('Content-Type', 'application/json');
       if (_isOpenAI && apiKey.isNotEmpty) {
@@ -106,7 +107,6 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
         text = jsonResponse['candidates'][0]['content']['parts'][0]['text'];
       }
 
-      // Cleanup markdown if present
       text = text.trim();
       if (text.startsWith('```')) {
         text = text.replaceAll(RegExp(r'^```json\s*|```$'), '');
@@ -132,8 +132,8 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
     client.connectionTimeout = const Duration(seconds: 15);
 
     try {
-      final systemPrompt = "You are in a group chat as ${personality.name}. YOUR PERSONALITY: ${personality.backstory}";
-      final userMessage = "CONTEXT (Recent Messages):\n${history.join('\n')}\n\nRespond as ${personality.name}:";
+      final systemPrompt = "You are in a group chat as ${personality.name}. PERSONALITY: ${personality.backstory}";
+      final userMessage = "RECENT CHAT:\n${history.isEmpty ? '[Silent Room]' : history.join('\n')}\n\nRespond to the conversation naturally as ${personality.name}:";
 
       final Uri uri;
       final Map<String, dynamic> body;
@@ -147,10 +147,9 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
             {"role": "user", "content": userMessage}
           ],
           "temperature": 0.8,
-          "max_tokens": 150
         };
       } else {
-        uri = Uri.parse('$_baseUrl/models/gemini-2.0-flash-exp:generateContent?key=$apiKey');
+        uri = Uri.parse('$_baseUrl/models/gemini-1.5-flash:generateContent?key=$apiKey');
         body = {
           "contents": [
             {
@@ -176,8 +175,8 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
       final responseBody = await response.transform(utf8.decoder).join();
 
       if (response.statusCode != 200) {
-        print('AI_ENGINE_ERROR: Status ${response.statusCode} - $responseBody');
-        return "I'm having trouble thinking... (API Error)";
+        print('AI_ENGINE_RESPONSE_ERROR: ${response.statusCode} - $responseBody');
+        return "My circuits are buzzing... (Status ${response.statusCode})";
       }
 
       final jsonResponse = jsonDecode(responseBody);
@@ -187,8 +186,8 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
         return jsonResponse['candidates'][0]['content']['parts'][0]['text'].trim();
       }
     } catch (e) {
-      print('AI_ENGINE_ERROR (Network): $e');
-      return "My connection is flickering... (Request failed)";
+      print('AI_ENGINE_NETWORK_ERROR: $e');
+      return "...";
     } finally {
       client.close();
     }
