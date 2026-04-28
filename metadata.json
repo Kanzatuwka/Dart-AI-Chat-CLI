@@ -1,0 +1,6 @@
+{
+  "name": "Dart AI Chat CLI",
+  "description": "A client-server chat application in Dart with AI participants and CLI interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
