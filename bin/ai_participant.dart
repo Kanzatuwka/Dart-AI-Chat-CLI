@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
-import '../lib/shared.dart';
+
 import '../lib/ai_engine.dart';
+import '../lib/shared.dart';
 import 'client.dart';
 
 class AIParticipant {
@@ -17,7 +19,7 @@ class AIParticipant {
   void start() {
     client.messages.listen((msg) {
       if (_isTerminating) return;
-      
+
       // Don't respond to self
       if (msg.sender == personality.name) return;
 
@@ -33,18 +35,18 @@ class AIParticipant {
   void _scheduleReaction() {
     _reactionTimer?.cancel();
     // Increase delay to 5-15 seconds for less frequent chatter
-    final delay = 5 + (DateTime.now().millisecond % 10); 
-    
+    final delay = 5 + (DateTime.now().millisecond % 10);
+
     _reactionTimer = Timer(Duration(seconds: delay), () async {
       if (_isTerminating) return;
-      
+
       // Increase skip chance to 50% to prevent bots from dominating the chat
       if (_history.isNotEmpty && DateTime.now().millisecond % 100 > 50) {
         return;
       }
-      
+
       final response = await engine.generateResponse(personality, _history);
-      
+
       if (!_isTerminating && response.isNotEmpty && response != "...") {
         client.sendMessage(response);
       }
@@ -55,7 +57,7 @@ class AIParticipant {
     if (_isTerminating) return;
     _isTerminating = true;
     _reactionTimer?.cancel();
-    
+
     try {
       // Send the farewell message before closing the socket
       await client.disconnect(personality.farewell);
@@ -69,7 +71,7 @@ void main(List<String> args) async {
   final apiKey = Platform.environment['GEMINI_API_KEY'];
   // engine handles empty key if LMStudio is used
   final engine = AIEngine(apiKey ?? '');
-  
+
   Personality? personality;
 
   if (args.isNotEmpty) {
@@ -96,7 +98,8 @@ void main(List<String> args) async {
   personality ??= engine.personalities.first;
 
   // Find port from environment or default
-  final portStr = Platform.environment['CHAT_PORT'] ?? ChatConfig.defaultPort.toString();
+  final portStr =
+      Platform.environment['CHAT_PORT'] ?? ChatConfig.defaultPort.toString();
   final port = int.tryParse(portStr) ?? ChatConfig.defaultPort;
 
   final client = ChatClient(personality.name);

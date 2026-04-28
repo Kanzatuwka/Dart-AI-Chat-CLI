@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
 /// Shared constants and message structures for the Chat application.
 class ChatConfig {
   static const int defaultPort = 8080;
@@ -8,12 +5,7 @@ class ChatConfig {
 }
 
 /// Represents the type of message being sent.
-enum MessageType {
-  join,
-  message,
-  system,
-  leave,
-}
+enum MessageType { join, message, system, leave }
 
 /// A standard message wrapper for JSON communication.
 class ChatMessage {
@@ -30,11 +22,11 @@ class ChatMessage {
   }) : this.timestamp = timestamp ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
-        'type': type.name,
-        'sender': sender,
-        'content': content,
-        'timestamp': timestamp.toIso8601String(),
-      };
+    'type': type.name,
+    'sender': sender,
+    'content': content,
+    'timestamp': timestamp.toIso8601String(),
+  };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
@@ -60,16 +52,19 @@ class ChatMessage {
       '\x1B[95m', // Light Magenta
       '\x1B[96m', // Light Cyan
     ];
-    final hash = sender.split('').fold(0, (int prev, char) => prev + char.codeUnitAt(0));
+    final hash = sender
+        .split('')
+        .fold(0, (int prev, char) => prev + char.codeUnitAt(0));
     return colors[hash % colors.length];
   }
 
   @override
   String toString() {
-    final timeStr = "${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}";
+    final timeStr =
+        "${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}";
     final nameColor = _getColorForSender(sender);
     const reset = '\x1B[0m';
-    
+
     switch (type) {
       case MessageType.system:
         return "$reset\x1B[33m[$timeStr] SYSTEM: $content$reset";
