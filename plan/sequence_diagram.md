@@ -2,37 +2,38 @@
 
 ```mermaid
 sequenceDiagram
-    participant U as User Client
-    participant S as Server
-    participant A as AI Participant (System)
+    participant U as User Client (Terminal)
+    participant S as Server (TCP)
+    participant A as AI Participant (Process)
+    participant E as Universal AI Bridge
 
     Note over U,S: Startup
-    U->>S: TCP Connect
-    U->>S: {"type": "join", "sender": "Alice"}
-    S-->>U: {"type": "join", "sender": "Alice"} (Ack Broadcast)
+    U->>S: TCP Connect (Port 8081)
+    U->>S: {"type": "join", "sender": "Alex"}
+    S-->>U: {"type": "join", "sender": "Alex"} (Broadcast)
 
-    Note over U,S: Message Flow
-    U->>S: {"type": "message", "content": "Hello!"}
-    S-->>U: {"type": "message", "sender": "Alice", "content": "Hello!"}
-
-    Note over U,A: AI Integration
-    U->>U: Command /ai_join critic
-    U->>A: Spawn Process (dart bin/ai_participant.dart critic)
+    Note over U,A: AI Spawning
+    U->>U: Command /ai_join ?
+    U->>U: Generate Random Personality
+    U->>A: Process.start(ai_participant.dart, json_data)
     A->>S: TCP Connect
-    A->>S: {"type": "join", "sender": "Cynical_Carl"}
-    S-->>U: {"type": "join", "sender": "Cynical_Carl"}
+    A->>S: {"type": "join", "sender": "Mystery_Bot"}
+    S-->>U: {"type": "join", "sender": "Mystery_Bot"}
     
-    Note over S,A: Reaction Loop
-    U->>S: {"type": "message", "content": "I love AI!"}
-    S-->>A: {"type": "message", "sender": "Alice", "content": "I love AI!"}
-    A->>A: Timer (4s Delay)
-    A->>Gemini: Request (Prompt + History)
-    Gemini-->>A: "AI is a distraction."
-    A->>S: {"type": "message", "sender": "Cynical_Carl", "content": "AI is a distraction."}
-    S-->>U: {"type": "message", "sender": "Cynical_Carl", "content": "..."}
+    Note over S,A: Reaction Loop (Stochastic)
+    U->>S: {"type": "message", "content": "Hello!"}
+    S-->>A: {"type": "message", "sender": "Alex", "content": "Hello!"}
+    A->>A: Wait (5s - 15s Delay)
+    A->>A: Roll for skip (50% chance)
+    Note right of A: If not skipped...
+    A->>E: Request (Prompt + 20-msg History)
+    E-->>A: "Hello, traveler."
+    A->>S: {"type": "message", "sender": "Mystery_Bot", "content": "Hello, traveler."}
+    S-->>U: [Nickname Colored Output]
 
-    Note over A,S: Soft Shutdown
-    A->>S: {"type": "message", "content": "I'm leaving... Goodbye."}
+    Note over A,S: Graceful Exit
+    A->>A: Time Limit (5m) Reached
+    A->>S: {"type": "message", "content": "Farewell, message..."} (Thematic)
     A->>S: {"type": "leave"}
-    A->>A: Process Terminate
+    A->>A: Socket Close / Terminate
 ```
