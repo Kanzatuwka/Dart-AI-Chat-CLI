@@ -42,94 +42,153 @@ class AIEngine {
 
   AIEngine(this.apiKey);
 
-  Future<Personality> generateRandomPersonality() async {
-    final url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey';
-    
-    final prompt = """
-Generate a unique and interesting chat personality. 
-Return ONLY a JSON object with the following fields:
-- "id": a unique slug (string)
-- "name": a creative name (string)
-- "backstory": a detailed biography and instructions on how they speak (string)
-- "farewell": a thematic goodbye message (string)
+  /// Base URL for the AI API. Defaults to Gemini if not set.
+  String get _baseUrl => Platform.environment['AI_BASE_URL'] ?? 
+      'https://generativelanguage.googleapis.com/v1beta';
 
-Be creative. The character could be an 18th-century pirate, a sentient microwave, a hyper-focused gamer, or a zen monk.
+  /// Whether we are using an OpenAI-compatible endpoint (like LMStudio).
+  bool get _isOpenAI => _baseUrl.contains('localhost') || _baseUrl.contains('127.0.0.1') || _baseUrl.contains('/v1');
+
+  Future<Personality> generateRandomPersonality() async {
+    final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
+    
+    try {
+      final prompt = """
+Generate a unique and interesting chat personality. 
+Return ONLY a raw JSON object (no markdown) with exactly these fields:
+{
+  "id": "unique-slug",
+  "name": "Creative Name",
+  "backstory": "Detailed personality description",
+  "farewell": "Thematic goodbye message"
+}
 """;
 
-    final client = HttpClient();
-    try {
-      final request = await client.postUrl(Uri.parse(url));
+      final Uri uri;
+      final Map<String, dynamic> body;
+
+      if (_isOpenAI) {
+        uri = Uri.parse('$_baseUrl/chat/completions');
+        body = {
+          "model": "local-model",
+          "messages": [{"role": "user", "content": prompt}],
+          "temperature": 0.8,
+        };
+      } else {
+        uri = Uri.parse('$_baseUrl/models/gemini-2.0-flash-exp:generateContent?key=$apiKey');
+        body = {
+          "contents": [{"parts": [{"text": prompt}]}],
+          "generationConfig": {"responseMimeType": "application/json"}
+        };
+      }
+
+      final request = await client.postUrl(uri);
       request.headers.set('Content-Type', 'application/json');
-      
-      final body = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-          "responseMimeType": "application/json",
-        }
-      };
+      if (_isOpenAI && apiKey.isNotEmpty) {
+        request.headers.set('Authorization', 'Bearer $apiKey');
+      }
 
       request.write(jsonEncode(body));
       final response = await request.close();
       final responseBody = await response.transform(utf8.decoder).join();
-      final jsonResponse = jsonDecode(responseBody);
-
-      if (jsonResponse['candidates'] != null && jsonResponse['candidates'].isNotEmpty) {
-        final text = jsonResponse['candidates'][0]['content']['parts'][0]['text'];
-        final data = jsonDecode(text);
-        return Personality(
-          id: data['id'],
-          name: data['name'],
-          backstory: data['backstory'],
-          farewell: data['farewell'],
-        );
+      
+      if (response.statusCode != 200) {
+        throw Exception("API Error (${response.statusCode}): $responseBody");
       }
-      throw Exception("Failed to generate personality");
+
+      final jsonResponse = jsonDecode(responseBody);
+      String text;
+
+      if (_isOpenAI) {
+        text = jsonResponse['choices'][0]['message']['content'];
+      } else {
+        text = jsonResponse['candidates'][0]['content']['parts'][0]['text'];
+      }
+
+      // Cleanup markdown if present
+      text = text.trim();
+      if (text.startsWith('```')) {
+        text = text.replaceAll(RegExp(r'^```json\s*|```$'), '');
+      }
+
+      final data = jsonDecode(text);
+      return Personality(
+        id: data['id'] ?? 'mystery',
+        name: data['name'] ?? 'Mystery Guest',
+        backstory: data['backstory'] ?? 'A mysterious stranger.',
+        farewell: data['farewell'] ?? 'I vanish into the mist.',
+      );
+    } catch (e) {
+      print('AI_ENGINE_ERROR (Random): $e');
+      rethrow;
     } finally {
       client.close();
     }
   }
 
   Future<String> generateResponse(Personality personality, List<String> history) async {
-    final url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey';
-    
-    // Construct prompt
-    String prompt = "You are participating in a group chat.\n";
-    prompt += "YOUR PERSONALITY: ${personality.backstory}\n\n";
-    prompt += "RELEVANT CHAT HISTORY:\n";
-    for (var msg in history) {
-      prompt += "$msg\n";
-    }
-    prompt += "\nRespond as ${personality.name} to the latest messages. Keep it natural for a chat. Do not repeat your name in the response prefix.";
-
     final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 15);
+
     try {
-      final request = await client.postUrl(Uri.parse(url));
-      request.headers.set('Content-Type', 'application/json');
-      
-      final body = {
-        "contents": [
-          {
-            "parts": [{"text": prompt}]
+      final systemPrompt = "You are in a group chat as ${personality.name}. YOUR PERSONALITY: ${personality.backstory}";
+      final userMessage = "CONTEXT (Recent Messages):\n${history.join('\n')}\n\nRespond as ${personality.name}:";
+
+      final Uri uri;
+      final Map<String, dynamic> body;
+
+      if (_isOpenAI) {
+        uri = Uri.parse('$_baseUrl/chat/completions');
+        body = {
+          "model": "local-model",
+          "messages": [
+            {"role": "system", "content": systemPrompt},
+            {"role": "user", "content": userMessage}
+          ],
+          "temperature": 0.8,
+          "max_tokens": 150
+        };
+      } else {
+        uri = Uri.parse('$_baseUrl/models/gemini-2.0-flash-exp:generateContent?key=$apiKey');
+        body = {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [{"text": "$systemPrompt\n\n$userMessage"}]
+            }
+          ],
+          "generationConfig": {
+            "maxOutputTokens": 150,
+            "temperature": 0.8,
           }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 150,
-          "temperature": 0.9,
-        }
-      };
+        };
+      }
+
+      final request = await client.postUrl(uri);
+      request.headers.set('Content-Type', 'application/json');
+      if (_isOpenAI && apiKey.isNotEmpty) {
+        request.headers.set('Authorization', 'Bearer $apiKey');
+      }
 
       request.write(jsonEncode(body));
       final response = await request.close();
       final responseBody = await response.transform(utf8.decoder).join();
-      final jsonResponse = jsonDecode(responseBody);
 
-      if (jsonResponse['candidates'] != null && jsonResponse['candidates'].isNotEmpty) {
-        return jsonResponse['candidates'][0]['content']['parts'][0]['text'].trim();
+      if (response.statusCode != 200) {
+        print('AI_ENGINE_ERROR: Status ${response.statusCode} - $responseBody');
+        return "I'm having trouble thinking... (API Error)";
+      }
+
+      final jsonResponse = jsonDecode(responseBody);
+      if (_isOpenAI) {
+        return jsonResponse['choices'][0]['message']['content'].trim();
       } else {
-        return "ERROR: AI could not generate response.";
+        return jsonResponse['candidates'][0]['content']['parts'][0]['text'].trim();
       }
     } catch (e) {
-      return "ERROR: Connection to AI failed.";
+      print('AI_ENGINE_ERROR (Network): $e');
+      return "My connection is flickering... (Request failed)";
     } finally {
       client.close();
     }

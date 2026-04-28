@@ -25,7 +25,7 @@ class ChatServer {
     print('CONNECTION: ${client.remoteAddress.address}:${client.remotePort} connected');
     _clients.add(client);
 
-    client.transform(utf8.decoder).transform(const LineSplitter()).listen(
+    client.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter()).listen(
       (String data) {
         try {
           final json = jsonDecode(data);

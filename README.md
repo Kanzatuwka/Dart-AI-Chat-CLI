@@ -26,7 +26,18 @@ This is a client-server chat application implemented in **Pure Dart** (standard 
    # Example: dart bin/client.dart Alice 8081
    ```
 
-3. **Interact with AI**:
+3. **Configure AI (Optional)**:
+   By default, it uses Gemini. To use a local LMStudio model:
+   ```bash
+   # Windows (PowerShell)
+   $env:AI_BASE_URL = "http://localhost:1234/v1"
+   dart bin/client.dart Alex 8081
+
+   # Linux/macOS
+   AI_BASE_URL="http://localhost:1234/v1" dart bin/client.dart Alex 8081
+   ```
+
+4. **Interact with AI**:
    Inside the client, use the following commands:
    - `/ai_join critic` (Cynical Carl)
    - `/ai_join polymath` (Professor Spark)

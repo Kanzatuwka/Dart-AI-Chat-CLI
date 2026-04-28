@@ -33,13 +33,20 @@ class AIParticipant {
 
   void _scheduleReaction() {
     _reactionTimer?.cancel();
-    _reactionTimer = Timer(const Duration(seconds: 4), () async {
+    // Use a variable delay to feel more natural
+    final delay = 3 + (DateTime.now().millisecond % 5); 
+    
+    _reactionTimer = Timer(Duration(seconds: delay), () async {
       if (_isTerminating) return;
       
-      // 30% chance to not respond to keep it natural
-      if (DateTime.now().millisecond % 10 > 7) return;
-
+      // 15% chance to skip (less than before to be more responsive)
+      if (DateTime.now().millisecond % 100 > 85) {
+        print('AI_DEBUG (${personality.name}): Choosing to stay quiet.');
+        return;
+      }
+      
       final response = await engine.generateResponse(personality, _history);
+      
       if (!_isTerminating) {
         client.sendMessage(response);
       }
@@ -47,9 +54,12 @@ class AIParticipant {
   }
 
   Future<void> shutdown() async {
+    if (_isTerminating) return;
     _isTerminating = true;
     _reactionTimer?.cancel();
-    print('AI Shutting down: ${personality.name}');
+    print('AI Soft Shutdown: ${personality.name}');
+    
+    // Attempt to send farewell before disconnecting
     await client.disconnect(personality.farewell);
   }
 }

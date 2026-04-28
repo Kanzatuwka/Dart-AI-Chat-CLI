@@ -21,18 +21,19 @@ export default function App() {
             <div className="p-4 bg-black/30 rounded-lg">
               <h3 className="font-mono text-sm uppercase text-neutral-500 mb-2">Components</h3>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>TCP Server (dart:io)</li>
-                <li>CLI Client (stdin/stdout)</li>
-                <li>Gemini AI Bridge</li>
+                <li>TCP Server (Multi-port support)</li>
+                <li>CLI Client (Interactive)</li>
+                <li>Mystery Guest Generator (?)</li>
                 <li>Soft Shutdown Logic</li>
               </ul>
             </div>
             <div className="p-4 bg-black/30 rounded-lg">
-              <h3 className="font-mono text-sm uppercase text-neutral-500 mb-2">Personalities</h3>
+              <h3 className="font-mono text-sm uppercase text-neutral-500 mb-2">Internal Tech</h3>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>Cynical Carl (Critic)</li>
-                <li>Professor Spark (Polymath)</li>
-                <li>Luna Vane (Poet)</li>
+                <li>Universal AI Bridge (Gemini/LMStudio)</li>
+                <li>Autonomous AI Processes</li>
+                <li>Variable Reaction timing</li>
+                <li>JSON Message Protocol</li>
               </ul>
             </div>
           </div>
@@ -50,9 +51,9 @@ export default function App() {
               <span>Available Commands</span>
             </div>
             <div className="text-neutral-500">
-              $ /ai_join [id] - Spawn an AI personality<br />
-              $ /ai_join ?    - Generate a Mystery Guest!<br />
-              $ /exit         - Graceful exit<br />
+              $ /ai_join [id] - Spawn bot (e.g., critic, polymath, poet)<br />
+              $ /ai_join ?    - Generate a Mystery Guest personality<br />
+              $ /exit         - Graceful exit with farewell message<br />
             </div>
           </div>
         </section>

@@ -24,7 +24,7 @@ class ChatClient {
         content: '',
       ));
 
-      _socket.transform(utf8.decoder).transform(const LineSplitter()).listen(
+      _socket.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter()).listen(
         (String data) {
           try {
             final json = jsonDecode(data);
@@ -104,7 +104,7 @@ void main(List<String> args) async {
   });
 
   stdout.write('> ');
-  stdin.transform(utf8.decoder).transform(const LineSplitter()).listen((String line) async {
+  stdin.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter()).listen((String line) async {
     if (line.trim().toLowerCase() == '/exit') {
       client.disconnect('Goodbye everyone!').then((_) => exit(0));
     } else if (line.trim().startsWith('/ai_join')) {
@@ -132,8 +132,8 @@ void main(List<String> args) async {
 
       print('\x1B[33mAttempting to spawn AI...\x1B[0m');
       Process.start('dart', ['bin/ai_participant.dart', argToPass]).then((Process process) {
-        process.stdout.transform(utf8.decoder).listen((data) => print('AI_LOG: $data'));
-        process.stderr.transform(utf8.decoder).listen((data) => print('AI_ERR: $data'));
+        process.stdout.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_LOG: $data'));
+        process.stderr.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_ERR: $data'));
       }).catchError((e) => print('Failed to start AI: $e'));
       stdout.write('> ');
     } else if (line.isNotEmpty) {
