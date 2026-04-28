@@ -83,14 +83,16 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
         };
       }
 
-      print('AI_ENGINE: Sending random personality request to $uri');
       final request = await client.postUrl(uri);
-      request.headers.set('Content-Type', 'application/json');
+      request.headers.set('Content-Type', 'application/json; charset=utf-8');
       if (_isOpenAI && apiKey.isNotEmpty) {
         request.headers.set('Authorization', 'Bearer $apiKey');
       }
 
-      request.write(jsonEncode(body));
+      final encodedBody = utf8.encode(jsonEncode(body));
+      request.contentLength = encodedBody.length;
+      request.add(encodedBody);
+      
       final response = await request.close();
       final responseBody = await response.transform(utf8.decoder).join();
       
@@ -132,8 +134,8 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
     client.connectionTimeout = const Duration(seconds: 15);
 
     try {
-      final systemPrompt = "You are in a group chat as ${personality.name}. PERSONALITY: ${personality.backstory}";
-      final userMessage = "RECENT CHAT:\n${history.isEmpty ? '[Silent Room]' : history.join('\n')}\n\nRespond to the conversation naturally as ${personality.name}:";
+      final systemPrompt = "You are in a group chat as ${personality.name}.\nPERSONALITY: ${personality.backstory}\n\nCONSTRAINTS:\n- VERY SHORT responses only (max 1-2 sentences).\n- Do NOT repeat what others said.\n- Do NOT use your name as a prefix.\n- Be punchy and natural.";
+      final userMessage = "CONVERSATION HISTORY:\n${history.isEmpty ? '[Quiet]' : history.join('\n')}\n\nYour short response as ${personality.name}:";
 
       final Uri uri;
       final Map<String, dynamic> body;
@@ -165,17 +167,19 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
       }
 
       final request = await client.postUrl(uri);
-      request.headers.set('Content-Type', 'application/json');
+      request.headers.set('Content-Type', 'application/json; charset=utf-8');
       if (_isOpenAI && apiKey.isNotEmpty) {
         request.headers.set('Authorization', 'Bearer $apiKey');
       }
 
-      request.write(jsonEncode(body));
+      final encodedBody = utf8.encode(jsonEncode(body));
+      request.contentLength = encodedBody.length;
+      request.add(encodedBody);
+      
       final response = await request.close();
       final responseBody = await response.transform(utf8.decoder).join();
 
       if (response.statusCode != 200) {
-        print('AI_ENGINE_RESPONSE_ERROR: ${response.statusCode} - $responseBody');
         return "My circuits are buzzing... (Status ${response.statusCode})";
       }
 
@@ -186,7 +190,6 @@ Return ONLY a raw JSON object (no markdown) with exactly these fields:
         return jsonResponse['candidates'][0]['content']['parts'][0]['text'].trim();
       }
     } catch (e) {
-      print('AI_ENGINE_NETWORK_ERROR: $e');
       return "...";
     } finally {
       client.close();

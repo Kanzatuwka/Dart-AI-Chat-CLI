@@ -15,25 +15,26 @@ export default function App() {
         <section className="bg-neutral-800/50 p-6 rounded-xl border border-neutral-700/50">
           <h2 className="text-2xl font-semibold mb-4 text-emerald-400">Project Status</h2>
           <p className="mb-4">
-            The core architecture, server-client logic, and AI personalities have been implemented in the <code>/bin</code> and <code>/lib</code> directories using Dart.
+            The core architecture is now fully optimized for both <strong>Gemini</strong> and <strong>local models (LMStudio)</strong>. 
+            AI participants have been calibrated for <strong>brevity</strong> and <strong>natural frequency</strong> to improve the chat experience.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-black/30 rounded-lg">
               <h3 className="font-mono text-sm uppercase text-neutral-500 mb-2">Components</h3>
               <ul className="list-disc list-inside text-sm space-y-1">
                 <li>TCP Server (Multi-port support)</li>
-                <li>CLI Client (Interactive)</li>
-                <li>Mystery Guest Generator (?)</li>
-                <li>Soft Shutdown Logic</li>
+                <li>CLI Client (Interactive UI)</li>
+                <li>Universal AI Bridge (UTF-8 Fix)</li>
+                <li>Soft Shutdown (Farewell Logic)</li>
               </ul>
             </div>
             <div className="p-4 bg-black/30 rounded-lg">
               <h3 className="font-mono text-sm uppercase text-neutral-500 mb-2">Internal Tech</h3>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>Universal AI Bridge (Gemini/LMStudio)</li>
-                <li>Autonomous AI Processes</li>
-                <li>Variable Reaction timing</li>
-                <li>JSON Message Protocol</li>
+                <li>Gemini 1.5 Flash / LMStudio</li>
+                <li>Local Qwen 3.5 Compatibility</li>
+                <li>Stochastic AI Reactions</li>
+                <li>Debounced JSON Streams</li>
               </ul>
             </div>
           </div>

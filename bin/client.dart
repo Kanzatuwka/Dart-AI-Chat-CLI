@@ -60,8 +60,8 @@ class ChatClient {
   Future<void> disconnect([String? farewell]) async {
     if (farewell != null) {
       sendMessage(farewell);
-      // Give some time for the message to be sent
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Give more time for the message to be propagated and broadcasted
+      await Future.delayed(const Duration(seconds: 1));
     }
     _send(ChatMessage(
       type: MessageType.leave,
@@ -113,7 +113,6 @@ void main(List<String> args) async {
 
       String argToPass = id;
       if (id == '?' && aiEngine != null) {
-        stdout.write('\x1B[35mGenerating mystery guest...\x1B[0m\n');
         try {
           final randomP = await aiEngine.generateRandomPersonality();
           argToPass = jsonEncode({
@@ -122,24 +121,21 @@ void main(List<String> args) async {
             'backstory': randomP.backstory,
             'farewell': randomP.farewell,
           });
-          print('\x1B[35m$id became ${randomP.name}!\x1B[0m');
         } catch (e) {
-          print('\x1B[31mFailed to generate mystery guest: $e\x1B[0m');
           stdout.write('> ');
           return;
         }
       }
 
-      print('\x1B[33mAttempting to spawn AI...\x1B[0m');
-      
       // Inherit and extend environment
       final env = Map<String, String>.from(Platform.environment);
       env['CHAT_PORT'] = client._socket.remotePort.toString();
       
       Process.start('dart', ['bin/ai_participant.dart', argToPass], environment: env).then((Process process) {
-        process.stdout.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_STDOUT: $data'));
-        process.stderr.cast<List<int>>().transform(utf8.decoder).listen((data) => print('AI_STDERR: $data'));
-      }).catchError((e) => print('Failed to start AI: $e'));
+        // Quietly listen without printing logs to local UI
+        process.stdout.listen((_) {});
+        process.stderr.listen((_) {});
+      }).catchError((_) {});
       stdout.write('> ');
     } else if (line.isNotEmpty) {
       client.sendMessage(line);
