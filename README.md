@@ -16,12 +16,14 @@ This is a client-server chat application implemented in **Pure Dart** (standard 
 
 1. **Start the Server**:
    ```bash
-   dart bin/server.dart
+   dart bin/server.dart [port]
+   # Example: dart bin/server.dart 8081
    ```
 
 2. **Start a Client**:
    ```bash
-   dart bin/client.dart [YourUsername]
+   dart bin/client.dart [YourUsername] [port]
+   # Example: dart bin/client.dart Alice 8081
    ```
 
 3. **Interact with AI**:

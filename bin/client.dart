@@ -74,15 +74,24 @@ class ChatClient {
 }
 
 void main(List<String> args) async {
-  if (args.isEmpty) {
-    stdout.write('Enter your username: ');
-    final name = stdin.readLineSync();
-    if (name == null || name.isEmpty) return;
-    args = [name];
+  String? username;
+  int port = ChatConfig.defaultPort;
+
+  if (args.isNotEmpty) {
+    username = args[0];
+    if (args.length > 1) {
+      port = int.tryParse(args[1]) ?? ChatConfig.defaultPort;
+    }
   }
 
-  final client = ChatClient(args[0]);
-  await client.connect();
+  if (username == null) {
+    stdout.write('Enter your username: ');
+    username = stdin.readLineSync();
+    if (username == null || username.isEmpty) return;
+  }
+
+  final client = ChatClient(username);
+  await client.connect(port: port);
 
   final apiKey = Platform.environment['GEMINI_API_KEY'];
   final aiEngine = apiKey != null ? AIEngine(apiKey) : null;

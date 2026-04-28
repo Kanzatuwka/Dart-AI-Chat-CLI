@@ -68,8 +68,13 @@ class ChatServer {
   }
 }
 
-void main() async {
-  final server = ChatServer();
+void main(List<String> args) async {
+  int port = ChatConfig.defaultPort;
+  if (args.isNotEmpty) {
+    port = int.tryParse(args[0]) ?? ChatConfig.defaultPort;
+  }
+  
+  final server = ChatServer(port: port);
   await server.start();
 
   ProcessSignal.sigint.watch().listen((_) async {
