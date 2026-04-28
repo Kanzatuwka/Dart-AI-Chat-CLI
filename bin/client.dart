@@ -97,8 +97,13 @@ void main(List<String> args) async {
   final aiEngine = apiKey != null ? AIEngine(apiKey) : null;
 
   client.messages.listen((msg) {
-    // Clear current line before printing received message
-    stdout.write('\r'); 
+    // Move up and clear line if the message is from the current user (to replace stdin echo)
+    // Note: This only works well if the sender name matches exactly.
+    if (msg.sender == client.username && msg.type == MessageType.message) {
+      stdout.write('\x1B[1A\x1B[2K\r');
+    } else {
+      stdout.write('\r\x1B[2K'); 
+    }
     print(msg);
     stdout.write('> '); 
   });
@@ -139,7 +144,6 @@ void main(List<String> args) async {
       stdout.write('> ');
     } else if (line.isNotEmpty) {
       client.sendMessage(line);
-      stdout.write('> ');
     }
   });
 }

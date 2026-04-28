@@ -45,18 +45,40 @@ class ChatMessage {
     );
   }
 
+  static String _getColorForSender(String sender) {
+    final colors = [
+      '\x1B[31m', // Red
+      '\x1B[32m', // Green
+      '\x1B[33m', // Yellow
+      '\x1B[34m', // Blue
+      '\x1B[35m', // Magenta
+      '\x1B[36m', // Cyan
+      '\x1B[91m', // Light Red
+      '\x1B[92m', // Light Green
+      '\x1B[93m', // Light Yellow
+      '\x1B[94m', // Light Blue
+      '\x1B[95m', // Light Magenta
+      '\x1B[96m', // Light Cyan
+    ];
+    final hash = sender.split('').fold(0, (int prev, char) => prev + char.codeUnitAt(0));
+    return colors[hash % colors.length];
+  }
+
   @override
   String toString() {
     final timeStr = "${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}";
+    final nameColor = _getColorForSender(sender);
+    const reset = '\x1B[0m';
+    
     switch (type) {
       case MessageType.system:
-        return "\x1B[33m[$timeStr] SYSTEM: $content\x1B[0m";
+        return "$reset\x1B[33m[$timeStr] SYSTEM: $content$reset";
       case MessageType.message:
-        return "\x1B[32m[$timeStr] $sender:\x1B[0m $content";
+        return "$reset\x1B[90m[$timeStr]\x1B[0m $nameColor$sender:$reset $content";
       case MessageType.join:
-        return "\x1B[34m[$timeStr] >>> $sender has joined the chat\x1B[0m";
+        return "$reset\x1B[34m[$timeStr] >>> $sender has joined the chat$reset";
       case MessageType.leave:
-        return "\x1B[31m[$timeStr] <<< $sender has left the chat\x1B[0m";
+        return "$reset\x1B[31m[$timeStr] <<< $sender has left the chat$reset";
     }
   }
 }

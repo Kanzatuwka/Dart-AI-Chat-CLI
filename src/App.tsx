@@ -16,7 +16,8 @@ export default function App() {
           <h2 className="text-2xl font-semibold mb-4 text-emerald-400">Project Status</h2>
           <p className="mb-4">
             The core architecture is now fully optimized for both <strong>Gemini</strong> and <strong>local models (LMStudio)</strong>. 
-            AI participants have been calibrated for <strong>brevity</strong> and <strong>natural frequency</strong> to improve the chat experience.
+            AI participants have been calibrated for <strong>brevity</strong> and <strong>natural frequency</strong>. 
+            Latest update adds <strong>deterministic nickname coloring</strong> and <strong>synchronous message feedback</strong> for a true chat experience.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-black/30 rounded-lg">
